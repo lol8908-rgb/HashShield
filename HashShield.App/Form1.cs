@@ -28,7 +28,7 @@ public partial class Form1 : Form
     {
         using var dialog = new OpenFileDialog
         {
-            Filter = "Alle Dateien|*.*",
+            Filter = "Textdateien (*.txt;*.log;*.cfg;*.ini;*.json;*.xml;*.csv;*.md)|*.txt;*.log;*.cfg;*.ini;*.json;*.xml;*.csv;*.md",
             Title = "HashShield-Datei auswählen"
         };
 
@@ -44,6 +44,12 @@ public partial class Form1 : Form
         if (string.IsNullOrWhiteSpace(_filePathTextBox.Text))
         {
             MessageBox.Show(this, "Bitte zuerst eine Datei auswählen oder per Drag & Drop ablegen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (!IsTextFile(_filePathTextBox.Text))
+        {
+            MessageBox.Show(this, "HashShield akzeptiert nur Textdateien. Bitte eine .txt, .log, .cfg, .ini, .json, .xml, .csv oder .md-Datei wählen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -85,7 +91,20 @@ public partial class Form1 : Form
             return;
         }
 
-        _filePathTextBox.Text = files[0];
-        _resultTextBox.Text = $"Per Drag & Drop geladen: {files[0]}{Environment.NewLine}";
+        var file = files[0];
+        if (!IsTextFile(file))
+        {
+            MessageBox.Show(this, "HashShield akzeptiert nur Textdateien. Bitte eine .txt, .log, .cfg, .ini, .json, .xml, .csv oder .md-Datei ziehen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        _filePathTextBox.Text = file;
+        _resultTextBox.Text = $"Per Drag & Drop geladen: {file}{Environment.NewLine}";
+    }
+
+    private static bool IsTextFile(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        return extension is ".txt" or ".log" or ".cfg" or ".ini" or ".json" or ".xml" or ".csv" or ".md";
     }
 }
