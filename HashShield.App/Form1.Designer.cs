@@ -21,10 +21,11 @@ partial class Form1
 
         var titleLabel = new Label();
         var subtitleLabel = new Label();
-        var filePathLabel = new Label();
-        var filePathTextBox = new TextBox();
-        var chooseFileButton = new Button();
-        var scanButton = new Button();
+        var targetLabel = new Label();
+        var targetTextBox = new TextBox();
+        var chooseFolderButton = new Button();
+        var quickScanButton = new Button();
+        var fullScanButton = new Button();
         var apiKeyLabel = new Label();
         var apiKeyTextBox = new TextBox();
         var resultTextBox = new TextBox();
@@ -42,30 +43,35 @@ partial class Form1
         titleLabel.Location = new Point(20, 20);
         titleLabel.Size = new Size(580, 40);
 
-        subtitleLabel.Text = "Dateien per Drag & Drop ablegen oder manuell auswählen. SHA-256 wird berechnet und mit lokalen Signaturen sowie VirusTotal abgeglichen.";
+        subtitleLabel.Text = "Ordner, Laufwerke oder Desktopbereiche für einen schnellen Scan auswählen. Dabei werden Hashes, lokale Signaturen und optional VirusTotal-Abfragen verwendet.";
         subtitleLabel.Font = new Font("Segoe UI", 10F);
         subtitleLabel.Location = new Point(20, 58);
         subtitleLabel.Size = new Size(840, 38);
 
-        filePathLabel.Text = "Dateipfad";
-        filePathLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-        filePathLabel.Location = new Point(20, 112);
-        filePathLabel.Size = new Size(120, 24);
+        targetLabel.Text = "Zielpfad";
+        targetLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        targetLabel.Location = new Point(20, 112);
+        targetLabel.Size = new Size(120, 24);
 
-        filePathTextBox.Location = new Point(20, 138);
-        filePathTextBox.Size = new Size(650, 30);
-        filePathTextBox.ReadOnly = true;
-        filePathTextBox.Name = "filePathTextBox";
+        targetTextBox.Location = new Point(20, 138);
+        targetTextBox.Size = new Size(650, 30);
+        targetTextBox.ReadOnly = true;
+        targetTextBox.Name = "targetTextBox";
 
-        chooseFileButton.Text = "Datei wählen";
-        chooseFileButton.Location = new Point(690, 136);
-        chooseFileButton.Size = new Size(150, 32);
-        chooseFileButton.Name = "chooseFileButton";
+        chooseFolderButton.Text = "Ordner wählen";
+        chooseFolderButton.Location = new Point(690, 136);
+        chooseFolderButton.Size = new Size(150, 32);
+        chooseFolderButton.Name = "chooseFolderButton";
 
-        scanButton.Text = "Scannen";
-        scanButton.Location = new Point(690, 178);
-        scanButton.Size = new Size(150, 32);
-        scanButton.Name = "scanButton";
+        quickScanButton.Text = "Quick Scan";
+        quickScanButton.Location = new Point(690, 178);
+        quickScanButton.Size = new Size(150, 32);
+        quickScanButton.Name = "quickScanButton";
+
+        fullScanButton.Text = "Full Scan";
+        fullScanButton.Location = new Point(690, 218);
+        fullScanButton.Size = new Size(150, 32);
+        fullScanButton.Name = "fullScanButton";
 
         apiKeyLabel.Text = "VirusTotal API-Key";
         apiKeyLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
@@ -84,14 +90,15 @@ partial class Form1
         resultTextBox.ReadOnly = true;
         resultTextBox.Font = new Font("Consolas", 10F);
         resultTextBox.Name = "resultTextBox";
-        resultTextBox.Text = "Datei hierher ziehen oder über \"Datei wählen\" auswählen.\r\n";
+        resultTextBox.Text = "Dateien oder Ordner hierher ziehen oder über \"Ordner wählen\" auswählen.\r\n";
 
         Controls.Add(titleLabel);
         Controls.Add(subtitleLabel);
-        Controls.Add(filePathLabel);
-        Controls.Add(filePathTextBox);
-        Controls.Add(chooseFileButton);
-        Controls.Add(scanButton);
+        Controls.Add(targetLabel);
+        Controls.Add(targetTextBox);
+        Controls.Add(chooseFolderButton);
+        Controls.Add(quickScanButton);
+        Controls.Add(fullScanButton);
         Controls.Add(apiKeyLabel);
         Controls.Add(apiKeyTextBox);
         Controls.Add(resultTextBox);

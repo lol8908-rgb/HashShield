@@ -2,68 +2,78 @@ namespace HashShield.App;
 
 public partial class Form1 : Form
 {
-    private readonly TextBox _filePathTextBox = null!;
+    private readonly TextBox _targetTextBox = null!;
     private readonly TextBox _apiKeyTextBox = null!;
     private readonly TextBox _resultTextBox = null!;
-    private readonly Button _chooseFileButton = null!;
-    private readonly Button _scanButton = null!;
+    private readonly Button _chooseFolderButton = null!;
+    private readonly Button _quickScanButton = null!;
+    private readonly Button _fullScanButton = null!;
 
     public Form1()
     {
         InitializeComponent();
 
-        _filePathTextBox = Controls.Find("filePathTextBox", true).FirstOrDefault() as TextBox ?? throw new InvalidOperationException();
+        _targetTextBox = Controls.Find("targetTextBox", true).FirstOrDefault() as TextBox ?? throw new InvalidOperationException();
         _apiKeyTextBox = Controls.Find("apiKeyTextBox", true).FirstOrDefault() as TextBox ?? throw new InvalidOperationException();
         _resultTextBox = Controls.Find("resultTextBox", true).FirstOrDefault() as TextBox ?? throw new InvalidOperationException();
-        _chooseFileButton = Controls.Find("chooseFileButton", true).FirstOrDefault() as Button ?? throw new InvalidOperationException();
-        _scanButton = Controls.Find("scanButton", true).FirstOrDefault() as Button ?? throw new InvalidOperationException();
+        _chooseFolderButton = Controls.Find("chooseFolderButton", true).FirstOrDefault() as Button ?? throw new InvalidOperationException();
+        _quickScanButton = Controls.Find("quickScanButton", true).FirstOrDefault() as Button ?? throw new InvalidOperationException();
+        _fullScanButton = Controls.Find("fullScanButton", true).FirstOrDefault() as Button ?? throw new InvalidOperationException();
 
-        _chooseFileButton.Click += ChooseFileButton_Click;
-        _scanButton.Click += ScanButton_Click;
+        _chooseFolderButton.Click += ChooseFolderButton_Click;
+        _quickScanButton.Click += QuickScanButton_Click;
+        _fullScanButton.Click += FullScanButton_Click;
         DragEnter += Form1_DragEnter;
         DragDrop += Form1_DragDrop;
     }
 
-    private void ChooseFileButton_Click(object? sender, EventArgs e)
+    private void ChooseFolderButton_Click(object? sender, EventArgs e)
     {
-        using var dialog = new OpenFileDialog
+        using var dialog = new FolderBrowserDialog
         {
-            Filter = "Textdateien (*.txt;*.log;*.cfg;*.ini;*.json;*.xml;*.csv;*.md)|*.txt;*.log;*.cfg;*.ini;*.json;*.xml;*.csv;*.md",
-            Title = "HashShield-Datei auswählen"
+            Description = "Zielordner für den HashShield-Scan auswählen"
         };
 
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
-            _filePathTextBox.Text = dialog.FileName;
-            _resultTextBox.Text = $"Ausgewählt: {dialog.FileName}{Environment.NewLine}";
+            _targetTextBox.Text = dialog.SelectedPath;
+            _resultTextBox.Text = $"Ziel ausgewählt: {dialog.SelectedPath}{Environment.NewLine}";
         }
     }
 
-    private async void ScanButton_Click(object? sender, EventArgs e)
+    private async void QuickScanButton_Click(object? sender, EventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(_filePathTextBox.Text))
+        if (string.IsNullOrWhiteSpace(_targetTextBox.Text))
         {
-            MessageBox.Show(this, "Bitte zuerst eine Datei auswählen oder per Drag & Drop ablegen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return;
+            _targetTextBox.Text = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         }
 
-        if (!IsTextFile(_filePathTextBox.Text))
+        await RunScanAsync(isFullScan: false);
+    }
+
+    private async void FullScanButton_Click(object? sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_targetTextBox.Text))
         {
-            MessageBox.Show(this, "HashShield akzeptiert nur Textdateien. Bitte eine .txt, .log, .cfg, .ini, .json, .xml, .csv oder .md-Datei wählen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
+            _targetTextBox.Text = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         }
 
-        _scanButton.Enabled = false;
+        await RunScanAsync(isFullScan: true);
+    }
+
+    private async Task RunScanAsync(bool isFullScan)
+    {
+        _quickScanButton.Enabled = false;
+        _fullScanButton.Enabled = false;
         _resultTextBox.Text = "Scan läuft...";
 
         try
         {
-            var result = await ScannerEngine.ScanAsync(_filePathTextBox.Text, _apiKeyTextBox.Text);
-            _resultTextBox.Text = $"Datei: {result.FileName}{Environment.NewLine}" +
-                                  $"SHA-256: {result.Hash}{Environment.NewLine}" +
-                                  $"Größe: {result.Size} Bytes{Environment.NewLine}" +
-                                  $"Lokale Regeln: {result.LocalRuleSummary}{Environment.NewLine}" +
-                                  $"VirusTotal: {result.VirusTotalSummary}{Environment.NewLine}";
+            var summary = isFullScan
+                ? await ScannerEngine.FullScanAsync(_targetTextBox.Text, _apiKeyTextBox.Text)
+                : await ScannerEngine.QuickScanAsync(_targetTextBox.Text, _apiKeyTextBox.Text);
+
+            _resultTextBox.Text = summary.ResultText;
         }
         catch (Exception ex)
         {
@@ -71,7 +81,8 @@ public partial class Form1 : Form
         }
         finally
         {
-            _scanButton.Enabled = true;
+            _quickScanButton.Enabled = true;
+            _fullScanButton.Enabled = true;
         }
     }
 
@@ -91,20 +102,8 @@ public partial class Form1 : Form
             return;
         }
 
-        var file = files[0];
-        if (!IsTextFile(file))
-        {
-            MessageBox.Show(this, "HashShield akzeptiert nur Textdateien. Bitte eine .txt, .log, .cfg, .ini, .json, .xml, .csv oder .md-Datei ziehen.", "HashShield", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        _filePathTextBox.Text = file;
-        _resultTextBox.Text = $"Per Drag & Drop geladen: {file}{Environment.NewLine}";
-    }
-
-    private static bool IsTextFile(string filePath)
-    {
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        return extension is ".txt" or ".log" or ".cfg" or ".ini" or ".json" or ".xml" or ".csv" or ".md";
+        var first = files[0];
+        _targetTextBox.Text = Directory.Exists(first) ? first : Path.GetDirectoryName(first) ?? first;
+        _resultTextBox.Text = $"Per Drag & Drop geladen: {_targetTextBox.Text}{Environment.NewLine}";
     }
 }
